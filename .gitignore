@@ -1,6 +1,7 @@
 # build output
 obj16/
 obj32/
+dist/
 *.obj
 *.err
 *.map

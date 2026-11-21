@@ -1,92 +1,154 @@
-# CDPL - CD audio test player for DOS
+CDPL - CD audio test player for DOS and DOS emulators
+=====================================================
 
-> **Warning:** this code was written with AI assistance (Claude). It was
-> built mostly to help test how DOS emulators handle CD audio, though it
-> should also work as a usable CD player.
+AI Disclosue/Warning:  Built with LLMs directed by an (ancient) developer.
 
-CDPL plays audio CDs through MSCDEX in the two ways DOS programs did:
 
-- **Analog**: MSCDEX PLAY AUDIO. The drive, or the emulator, plays the
-  audio itself. Position comes from the Q-channel, the end of play from
-  the busy bit.
-- **Digital**: raw READ LONG of the audio sectors (2352 bytes each),
-  streamed to a Sound Blaster with auto-init DMA. SB16 at 16-bit stereo
-  44.1 kHz, falling back to 8-bit 22 kHz on SB Pro and SB 2.0.
+TUI and text mode CD Player, built to exercise emulators and hardware.
 
-The same source builds two engines:
+CDPL is a perfectly functional TUI CDplayer, it's also designed to
+exercise emulators (DOSEMU2 at first).
 
-- **CDPL16.EXE**: 16-bit real mode.
-- **CDPL32.EXE**: 32-bit protected mode under DOS/4GW (or another
-  extender).
 
-**CDPL.EXE** is a small launcher that runs one engine and switches to the
-other when you pick it in the UI, so the two feel like one program. Analog
-play carries on through the switch, which tests that the drive state
-survives. On an 8086 or 286 only the 16-bit engine runs, and the UI just
-says so.
+- Play CDs and extract information
+- 16 or 32 bit (386 and up only), togglable from the GUI
+- Analogue and digital playback
+- Scriptable.
 
-The full-screen UI is in the style of Norton Utilities 8. It uses a
-redefined VGA font for check boxes, icons, 1-pixel bar fills and a
-pixel-precise mouse pointer in text mode. Every request sent to MSCDEX is
-shown in a log with its status word.
 
-Everything can also be driven from the command line, for dumb consoles
-and scripts:
+Files:
+CDPL.EXE
 
-```
-CDPL I                        drive information
-CDPL /M:D P 3 W               play track 3 digitally until it ends
+Launcher - this is the way to interact with CDPL and launch the TUI
+
+TUI functions:
+
+Playback modes (Options menu, M key):
+
+Analog:
+The native playback function of the drive, on hardware this would send
+audio from a cable on the drive to the sound card.
+
+Note:  Many sound cards default the CD Audio to be 0 or very quiet,
+       You can set the volume in CDPL.
+
+
+
+Digital:
+The player itself reads audio data from CD and sends it to the soundcard.
+
+Supported soundcards:
+
+Sound blaster and compatible support:
+
+SB16: 16-bit stereo 44.1 kHz.
+SB Pro: 8-bit stereo 22 kHz.
+SB 2.0: 8-bit mono 22 kHz.
+
+BLASTER must be set (A, I, D and H for 16-bit).
+
+
+16 / 32 bit toggle:
+When run from CDPL you can switch between 16 and 32 bit, this is
+useful for testing emulators.
+
+Player state, mouse position etc are saved and then restored after
+the switch, so to the user it should be fairly smooth.
+
+Interally this CDPL16 will quit and the launcher will start CDPL32.
+
+
+Commandline options:
+
+CDPL [switches] [command ...]
+
+If no commands are specified the TUI launches.
+
+Commands are words seperated by spaces, most of them have short forms.
+
+Some examples:
+
+CDPL I              Show drive information.
+CDPL /M:D P 3 W     Set [/M]ode to [d]igital, [P]lay track [3] and [W]ait until it finishes.
+CDPL /16 /D:G TE    Self test the G: drive
+
+Chain commands together for longer tests:
 CDPL P 3+01:30 W 5 PA ST R W 5 S L
-CDPL /16 /D:G TE              self test in the 16-bit engine on drive G:
-CDPL /?                       help
-```
 
-[README.TXT](README.TXT) is the full manual: commands, switches, keys and
-exit codes. It ships with the binaries.
+Using the longer names can be more readable:
+CDPL PLAY 3+01:30 WAIT 5 PAUSE STATUS RESUME WAIT 5 STOP LOG
 
-## Building
+If a command is unknown CDPL exits with errorlevel 3.
 
-You need [Open Watcom 2.0](https://github.com/open-watcom/open-watcom-v2)
-on a Linux host. The makefile uses `mkdir -p`, `rm` and `cp`.
 
-```sh
-export WATCOM=/opt/watcom          # where Open Watcom is installed
-export PATH=$WATCOM/binl64:$PATH   # binl for a 32-bit host
-wmake                              # CDPL.EXE, CDPL16.EXE, CDPL32.EXE, DOS4GW.EXE
-wmake EXT=dos32a                   # link CDPL32 for DOS/32A instead (also pmodew)
-wmake clean
-```
+Commands:
 
-The build treats warnings as errors (`-we`). The output goes in the top
-directory, and DOS4GW.EXE is copied from `$WATCOM/binw`. Copy the four EXEs
-to the DOS machine or emulator drive, and run `CDPL`.
+  P  PLAY [pos[-end]]  pos = TRACK | TRACK+MM:SS[.FF] | MM:SS[.FF] (absolute
+                       Red Book time, 00:02.00 = HSG sector 0).  
 
-## Running
+                       Default end:  end of the run of audio tracks;
+                       "-TRACK" = end of that track e.g. P 3   P 3-5   P 3+01:30-3
+  PA PAUSE
+  R  RESUME
+  S  STOP              analog STOP is sent twice if the first only pauses
+  SK SEEK pos          stopped: SEEK request; playing/paused: PLAY from pos
+  W  WAIT [secs]       poll and print the position once a second, until
+                       play ends, or secs (e.g. 5, 2.5) pass; any key stops
+                       it.  Digital play only runs while CDPL does, so a
+                       digital script ends with W.
+  E  EJECT             open the tray (IOCTL output 0; stops digital play)
+  IN INSERT            close the tray (IOCTL output 5) and re-read the TOC
+                       Both report the door bit from Device Status.
+  I  INFO              the Drive Info dialog's lines, then the TOC
+  T  TOC
+  ST STATUS
+  L  LOG               the MSCDEX request log
+  V  VOL 0-255         Audio Channel Control (+ SB voice level when digital)
+  SB SBCD 0-255        SB mixer CD input level, raw register value
+  TE TEST              self test: PASS/FAIL/SKIP lines, fails if any FAIL
+  An argument is the next word when it starts with a digit.
+  Analog play carries on after CDPL exits; digital play stops.
 
-CDPL needs an MSCDEX-compatible driver (MSCDEX, SHSUCDX, ...) with a CD
-drive. For digital play it also needs a Sound Blaster and the `BLASTER`
-variable (`A`, `I`, `D`, and `H` for 16-bit).
 
-In dosemu2, point the CD drive at an image and load SHSUCDX on dosemu's
-CD driver:
+Switches
+  /M:A  /MODE:ANALOG   playback mode (default: the UI's last mode, or
+  /M:D  /MODE:DIGITAL    analog for commands, which ignore CDPL.STA)
+  /D:x  /DRIVE:x       CD drive x:
+  /RB   /REDBOOK       send PLAY AUDIO with Red Book instead of HSG addresses
+  /16 /32              engine; CDPL.EXE starts that one (default: the last
+                       one used; always 16 below a 386).  An engine given
+                       the other one refuses.
+  /NF   /NOFONT        standard CP437 characters and the driver's cursor
+  /BF   /BIOSFONT      load the custom glyphs with INT 10h AX=1110h, not
+                       plane 2
+  /MA   /MABS          pointer from INT 33h fn 3 instead of mickeys (fn 0Bh)
+  /K:.. /KEYS:...      scripted UI input for automated runs: comma-separated
+                       single characters, key names (tab stab enter esc
+                       space up down left right pgup pgdn home end f1 f10
+                       alt-x), wN = wait N ticks, mX:Y = move pointer to
+                       pixel X,Y, click, rclick.  e.g. CDPL /K:w10,3,w40,i
+  /?    /H             help
+  Internal: /S:file (state file, default CDPL.STA), /LAUNCHED (set by
+  CDPL.EXE; enables the engine switch).
 
-```
-dosemu -I 'cdrom { "/path/to/disc.cue" }'
-C:\> shsucdx /d:MSCD0001
-C:\> cdpl
-```
+Exit codes
+  0 ok, 1 a command failed (including a position not on the disc),
+  2 no MSCDEX, 3 bad command line (unknown word or switch, missing
+  argument, not a CD drive).  16 and 32 are used between the engines and
+  CDPL.EXE.
 
-## Source layout
+Keys
+  P/Enter play, Space pause/resume, S stop, N/B next/previous track,
+  Left/Right seek 5 s, 1-9 track, M analog/digital, E eject, C close,
+  I drive info, R raw sector peek (C there toggles cooked/raw),
+  L request log, F10 menu, Alt-X exit.  Right click = pause.
 
-Each layer only uses the ones above it:
+The request log at the bottom shows each device request sent through
+INT 2Fh AX=1510h, with its status word (ERR / BUSY / DONE bits).  Polled
+Q-channel reads and good digital READ LONGs are only logged on error.
 
-| Directory    | What | Uses |
-|--------------|------|------|
-| `src/plat`   | DOS platform layer: real-mode interrupts, DOS memory, DMA buffers, IRQs. `plat16.c` is real mode, `plat32.c` is DPMI, and `cpu.c` detects 8086/286/386+. | - |
-| `src/core`   | `mscdex` (device requests, TOC, Q-channel, request log), `sb` (DSP, mixer, DMA), `player` (analog and digital back ends behind one API), `info` (drive information text). No screen code. | plat |
-| `src/tui`    | Text UI toolkit: `vga` (8-dot mode, font upload), `glyphs` (custom characters), `mouse` (INT 33h), `tui` (back buffer, drawing, pointer, events). No CD code. | plat |
-| `src/app`    | `main` (switches, start-up, dispatch), `ui` (the player screen, menus and dialogs), `cli` (command words), `selftest` (TEST), `state` (CDPL.STA for engine switches) | all |
-| `src/launch` | `CDPL.EXE`: runs CDPL16/CDPL32 and switches between them | - |
 
-The 16/32-bit differences stay in `src/plat`. The rest of the code is
-the same for both engines, apart from `ENGINE_BITS`.
+Building (Linux host, Open Watcom 2.0 on the PATH, WATCOM set)
+  wmake               all three EXEs, and copies DOS4GW.EXE
+  wmake EXT=dos32a    link CDPL32 for another extender (dos32a, pmodew)
+  wmake clean

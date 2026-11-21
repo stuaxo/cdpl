@@ -3,6 +3,7 @@
 #   wmake              CDPL.EXE (launcher), CDPL16.EXE, CDPL32.EXE, DOS4GW.EXE
 #   wmake EXT=dos32a   link CDPL32 for DOS/32A instead of DOS/4GW
 #                      (also: pmodew, causeway)
+#   wmake dist         the above, plus README.MD (CRLF line endings), in dist/
 #   wmake clean
 #
 # Source layers (each only uses the ones above it):
@@ -133,5 +134,10 @@ CDPL32.EXE: $(OBJ32)
 DOS4GW.EXE: $(%WATCOM)/binw/dos4gw.exe
     cp $(%WATCOM)/binw/dos4gw.exe DOS4GW.EXE
 
+dist: all .SYMBOLIC
+    @mkdir -p dist
+    cp CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE dist/
+    sed 's/$$/\r/' README.md > dist/README.MD
+
 clean: .SYMBOLIC
-    rm -rf obj16 obj32 CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE *.err
+    rm -rf obj16 obj32 dist CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE *.err
