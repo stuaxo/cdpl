@@ -7,6 +7,7 @@
 #include <process.h>
 #include <dos.h>
 #include <i86.h>
+#include "cpu.h"
 
 #define MAXARGS 16
 
@@ -96,8 +97,15 @@ int main(int argc, char **argv)
         fclose(f);
     }
     for (i = 1; i < argc; i++)
-        if (is_engine_sw(argv[i]))
+        if (is_engine_sw(argv[i])) {
             engine = atoi(argv[i] + 1);
+            if (engine == 32 && !cpu_is_386()) {
+                printf("CDPL: %s: the 32-bit engine needs a 386 or later\n", argv[i]);
+                return 3;
+            }
+        }
+    if (!cpu_is_386())
+        engine = 16;                    /* a saved engine=32 from elsewhere */
 
     mouse_save();
     for (n = 0;; first = 0) {

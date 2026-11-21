@@ -19,9 +19,9 @@ EXT = dos4g
 INC = -i=$(%WATCOM)/h -i=src/plat -i=src/core -i=src/tui -i=src/app
 CF16 = -zq -ml -bt=dos -2 -s -ox -w4 -we -dCDPL16 $(INC)
 CF32 = -zq -mf -bt=dos -3r -s -ox -w4 -we -dCDPL32 $(INC)
-CFL  = -zq -ms -bt=dos -0 -s -os -w4 -we -i=$(%WATCOM)/h
+CFL  = -zq -ms -bt=dos -0 -s -os -w4 -we -i=$(%WATCOM)/h -i=src/plat
 
-OBJ16 = obj16/plat16.obj obj16/mscdex.obj obj16/sb.obj &
+OBJ16 = obj16/plat16.obj obj16/cpu.obj obj16/mscdex.obj obj16/sb.obj &
         obj16/player.obj obj16/info.obj obj16/vga.obj &
         obj16/glyphs.obj obj16/mouse.obj obj16/tui.obj &
         obj16/main.obj obj16/ui.obj obj16/cli.obj obj16/selftest.obj &
@@ -32,7 +32,7 @@ OBJ32 = obj32/plat32.obj obj32/mscdex.obj obj32/sb.obj &
         obj32/main.obj obj32/ui.obj obj32/cli.obj obj32/selftest.obj &
         obj32/state.obj
 
-HDRS = src/plat/plat.h src/core/mscdex.h src/core/sb.h src/core/player.h &
+HDRS = src/plat/plat.h src/plat/cpu.h src/core/mscdex.h src/core/sb.h src/core/player.h &
        src/core/info.h src/tui/vga.h src/tui/glyphs.h src/tui/mouse.h &
        src/tui/tui.h src/app/opts.h src/app/ui.h src/app/cli.h &
        src/app/selftest.h src/app/state.h
@@ -44,8 +44,12 @@ obj16: .SYMBOLIC
 obj32: .SYMBOLIC
     @mkdir -p obj32
 
-obj16/launch.obj: src/launch/launch.c
+obj16/launch.obj: src/launch/launch.c src/plat/cpu.h
     wcc $(CFL) -fo=$@ src/launch/launch.c
+obj16/cpul.obj: src/plat/cpu.c src/plat/cpu.h
+    wcc $(CFL) -fo=$@ src/plat/cpu.c
+obj16/cpu.obj: src/plat/cpu.c $(HDRS)
+    wcc $(CF16) -fo=$@ src/plat/cpu.c
 
 obj16/plat16.obj: src/plat/plat16.c $(HDRS)
     wcc $(CF16) -fo=$@ src/plat/plat16.c
@@ -117,8 +121,8 @@ obj16/state.obj: src/app/state.c $(HDRS)
 obj32/state.obj: src/app/state.c $(HDRS)
     wcc386 $(CF32) -fo=$@ src/app/state.c
 
-CDPL.EXE: obj16/launch.obj
-    wlink op q system dos name $@ file obj16/launch.obj
+CDPL.EXE: obj16/launch.obj obj16/cpul.obj
+    wlink op q system dos name $@ file { obj16/launch.obj obj16/cpul.obj }
 
 CDPL16.EXE: $(OBJ16)
     wlink op q system dos op stack=8k name $@ file { $(OBJ16) }

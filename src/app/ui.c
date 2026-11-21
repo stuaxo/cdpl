@@ -16,6 +16,7 @@
 #include "state.h"
 #include "info.h"
 #include "opts.h"
+#include "cpu.h"
 #include "ui.h"
 
 /* ---- globals ---------------------------------------------------------- */
@@ -30,6 +31,7 @@ static int  pressed = -1;           /* control held down by the mouse */
 static int  dragging = -1;
 static u32  start_tick;
 static int  ui_up;
+static int  can_switch;             /* CDPL.EXE and a 386: show the switch */
 
 static void cmd_exec(int cmd);
 
@@ -364,14 +366,15 @@ static void draw_main(void)
     for (i = ID_PREV; i <= ID_NEXT; i++)
         draw_icon_btn(i);
     tui_str(39, 11, "Mode", A_LABEL);
-    if (opt.launched)
-        tui_str(39, 12, "Engine", A_LABEL);
+    tui_str(39, 12, "Engine", A_LABEL);
     draw_icon_btn(ID_EJECT);
     draw_toggle(ID_ANALOG, pl.mode == MODE_ANALOG);
     draw_toggle(ID_DIGITAL, pl.mode == MODE_DIGITAL);
-    if (opt.launched) {
+    if (can_switch) {
         draw_toggle(ID_E16, ENGINE_BITS == 16);
         draw_toggle(ID_E32, ENGINE_BITS == 32);
+    } else {
+        tui_str(46, 12, plat_name(), A_LABEL);  /* just say which one */
     }
     draw_toggle(ID_REPEAT, repeat_on);
     draw_toggle(ID_REDBOOK, cd.redbook);
@@ -888,10 +891,8 @@ static void switch_engine(int bits)
 
     if (bits == ENGINE_BITS)
         return;
-    if (!opt.launched) {
-        error_box(" Engine ", "Start CDPL.EXE to switch between the 16 and 32-bit engines.");
-        return;
-    }
+    if (!can_switch)
+        return;                         /* controls are hidden anyway */
     fill_state(&s);
     s.engine = bits;
     s.switched = 1;
@@ -1211,8 +1212,10 @@ int ui_run(int r, u32 t0)
     }
     if (opt.mode >= 0)
         pl.mode = opt.mode;
-    if (!opt.launched) {
-        /* the engine switch needs CDPL.EXE; started directly, hide it */
+    /* the switch needs CDPL.EXE to start the other engine, and a 386 for
+     * the 32-bit one; otherwise the Engine row is plain text */
+    can_switch = opt.launched && cpu_is_386();
+    if (!can_switch) {
         ctl[ID_E16].w = ctl[ID_E32].w = 0;
         ctl[ID_E16].altkey = ctl[ID_E32].altkey = 0;
         menus[3].n = M_OPT_SOLO;

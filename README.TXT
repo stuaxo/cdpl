@@ -1,49 +1,85 @@
 CDPL - CD audio test player for DOS and DOS emulators
 =====================================================
 
-Plays audio CDs through MSCDEX in two ways, from a 16-bit real-mode
-build and a 32-bit DPMI build of the same source, with a Norton
-Utilities style text UI.
+AI Disclosue/Warning:  Built with LLMs directed by an (ancient) developer,
 
-  CDPL.EXE     launcher: runs CDPL16 or CDPL32 and switches between them
-  CDPL16.EXE   16-bit real mode engine + UI
-  CDPL32.EXE   32-bit protected mode engine + UI (DOS/4GW, DOS4GW.EXE)
 
-Playback modes (Options menu, M key)
-  Analog   MSCDEX PLAY AUDIO (1510h cmd 132): the drive or emulator plays
-           the audio itself.  Position from the Q-channel IOCTL, end of
-           play from the busy bit.
-  Digital  READ LONG raw mode (cmd 128, 2352 bytes/sector) streamed to a
-           Sound Blaster with auto-init DMA.  SB16: 16-bit stereo 44.1 kHz.
-           SB Pro: 8-bit stereo 22 kHz.  SB 2.0: 8-bit mono 22 kHz.
-           Needs BLASTER (A, I, D and H for 16-bit).
+TUI and text mode CD Player, built to exercise emulators and hardware.
 
-Engine switch (Options menu, or the 16-bit / 32-bit radio buttons)
-  Only when started through CDPL.EXE.  The running engine writes
-  CDPL.STA and exits with code 16 or 32, and the launcher starts the
-  other build.  Analog play keeps running in the drive across the switch,
-  and the new engine resyncs from the busy bit and the Q-channel.  This
-  tests that the drive state survives.  Digital play restarts at the
-  same position.  The video mode and font are left as they are across
-  the switch (no mode set, so no window resize in an emulator), and the
-  pointer keeps its position.  The launcher saves the mouse driver state
-  (INT 33h 16h) before the first engine and restores it (17h) on exit.
-  Started directly, an engine hides the Engine controls.
+CDPL is a perfectly functional TUI CDplayer, it's also designed to
+exercise emulators (DOSEMU2 at first).
 
-Command line
-  CDPL [switches] [command ...]
-  With no command, the full-screen player starts.  Commands are plain
-  words that run in the order given; switches start with / (or -) and
-  apply to the whole run wherever they are.  Every command and switch has
-  a short form.  Anything unknown stops before doing anything (exit 3).
 
-    CDPL I                      drive information
-    CDPL /M:D P 3 W             play track 3 digitally until it ends
-    CDPL P 3+01:30 W 5 PA ST R W 5 S L
-    CDPL /16 /D:G TE            self test in the 16-bit engine on G:
+Top level features:
 
-Commands (no UI; each prints a line starting OK or ERROR, and the first
-error prints the last MSCDEX requests and stops)
+- Play CDs and extract information
+- 16 or 32 bit, togglable from the GUI
+- Analogue and digital playback
+- Scriptable.
+
+
+Files:
+CDPL.EXE
+
+Launcher - this is the way to interact with CDPL and launch the TUI
+
+TUI functions:
+
+Playback modes (Options menu, M key):
+
+Analog:
+The native playback function of the drive, on hardware this would send
+audio from a cable on the drive to the sound card.
+
+Note:  Many sound cards default the CD Audio to be 0 or very quiet,
+       You can set the volume in CDPL.
+
+
+
+Digital:
+The player itself reads audio data from CD and sends it to the soundcard.
+
+Note:  Requires BLASTER to be set.
+Supports:
+SB16: 16-bit stereo 44.1 kHz.
+SB Pro: 8-bit stereo 22 kHz.  SB 2.0: 8-bit mono 22 kHz.
+Requires BLASTER to be set (A, I, D and H for 16-bit).
+
+
+16 / 32 bit toggle:
+When run from CDPL you can switch between 16 and 32 bit, this is
+useful for testing emulators.
+
+Player state, mouse position etc are saved and then restored after
+the switch, so to the user it should be fairly smooth.
+
+Interally this CDPL16 will quit and the launcher will start CDPL32.
+
+
+Commandline options:
+
+CDPL [switches] [command ...]
+
+By default CDPL with no commands launches the TUI.
+
+Commands are words seperated by spaces, most of them have short forms.
+
+Some examples:
+
+CDPL I              Show drive information.
+CDPL /M:D P 3 W     Set [/M]ode to [d]igital], [P]lay track [3] and [W]ait until it finishes.
+CDPL /16 /D:G TE    Self test the G: drive
+
+You can chain these together for longer tests:
+CDPL P 3+01:30 W 5 PA ST R W 5 S L
+
+Though at that point the longer form may be more readable.
+CDPL PLAY 3+01:30 WAIT 5 PAUSE STATUS RESUME WAIT 5 STOP LOG
+
+If a command is unknown CDPL exits with errorlevel 3.
+
+
+Commands:
   P  PLAY [pos[-end]]  pos = TRACK | TRACK+MM:SS[.FF] | MM:SS[.FF] (absolute
                        Red Book time, 00:02.00 = HSG sector 0).  Default end:
                        the end of the run of audio tracks; "-TRACK" = end of
@@ -75,7 +111,8 @@ Switches
   /D:x  /DRIVE:x       CD drive x:
   /RB   /REDBOOK       send PLAY AUDIO with Red Book instead of HSG addresses
   /16 /32              engine; CDPL.EXE starts that one (default: the last
-                       one used).  An engine given the other one refuses.
+                       one used; always 16 below a 386).  An engine given
+                       the other one refuses.
   /NF   /NOFONT        standard CP437 characters and the driver's cursor
   /BF   /BIOSFONT      load the custom glyphs with INT 10h AX=1110h, not
                        plane 2
@@ -116,7 +153,3 @@ Building (Linux host, Open Watcom 2.0 on the PATH, WATCOM set)
   wmake               all three EXEs, and copies DOS4GW.EXE
   wmake EXT=dos32a    link CDPL32 for another extender (dos32a, pmodew)
   wmake clean
-
-Testing in dosemu2
-  $_cdrom = "/path/disc.cue" in a dosemu config, then load MSCDEX with
-  SHSUCDX /D:MSCD0001, then CDPL /16 TE and CDPL /32 TE.

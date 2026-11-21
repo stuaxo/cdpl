@@ -22,7 +22,8 @@ The same source builds two engines:
 **CDPL.EXE** is a small launcher that runs one engine and switches to the
 other when you pick it in the UI, so the two feel like one program. Analog
 play carries on through the switch, which tests that the drive state
-survives.
+survives. On an 8086 or 286 only the 16-bit engine runs, and the UI just
+says so.
 
 The full-screen UI is in the style of Norton Utilities 8. It uses a
 redefined VGA font for check boxes, icons, 1-pixel bar fills and a
@@ -81,7 +82,7 @@ Each layer only uses the ones above it:
 
 | Directory    | What | Uses |
 |--------------|------|------|
-| `src/plat`   | DOS platform layer: real-mode interrupts, DOS memory, DMA buffers, IRQs. `plat16.c` is real mode, `plat32.c` is DPMI. | - |
+| `src/plat`   | DOS platform layer: real-mode interrupts, DOS memory, DMA buffers, IRQs. `plat16.c` is real mode, `plat32.c` is DPMI, and `cpu.c` detects 8086/286/386+. | - |
 | `src/core`   | `mscdex` (device requests, TOC, Q-channel, request log), `sb` (DSP, mixer, DMA), `player` (analog and digital back ends behind one API), `info` (drive information text). No screen code. | plat |
 | `src/tui`    | Text UI toolkit: `vga` (8-dot mode, font upload), `glyphs` (custom characters), `mouse` (INT 33h), `tui` (back buffer, drawing, pointer, events). No CD code. | plat |
 | `src/app`    | `main` (switches, start-up, dispatch), `ui` (the player screen, menus and dialogs), `cli` (command words), `selftest` (TEST), `state` (CDPL.STA for engine switches) | all |
