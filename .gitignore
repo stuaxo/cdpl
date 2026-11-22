@@ -1,0 +1,21 @@
+# build output
+obj16/
+obj32/
+dist/
+*.obj
+*.err
+*.map
+CDPL.EXE
+CDPL16.EXE
+CDPL32.EXE
+# copied from the Open Watcom tree by the build
+DOS4GW.EXE
+
+# runtime state written by the player
+CDPL.STA
+cdpl.sta
+
+# test leftovers
+*.wav
+*.log
+*.bak
