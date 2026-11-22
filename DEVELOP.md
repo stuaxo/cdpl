@@ -17,7 +17,7 @@ wmake clean                        # removes obj16/, obj32/, dist/ and the EXEs
 | Output | Built as |
 |---|---|
 | `CDPL.EXE` | launcher, 16-bit small model, 8086 code (`-ms -0`) |
-| `CDPL16.EXE` | real-mode engine, large model, 286 code (`-ml -2`) |
+| `CDPL16.EXE` | real-mode engine, large model, 8086 code (`-ml -0`), so it runs on an XT |
 | `CDPL32.EXE` | DPMI engine, flat model, 386 code (`-mf -3r`), linked for DOS/4GW unless `EXT` says otherwise |
 | `DOS4GW.EXE` | copied from `$WATCOM/binw` |
 

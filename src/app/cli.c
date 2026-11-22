@@ -15,6 +15,7 @@
 #include "sb.h"
 #include "info.h"
 #include "cli.h"
+#include "cpu.h"
 
 #include "selftest.h"
 
@@ -408,6 +409,10 @@ static int c_play(const char *v)
             return fail(pl.err);
         printf("OK    PLAY digital %s-%s (HSG %lu +%lu) %s\n", a, b, from - 150,
                to - from, sb.desc);
+#ifdef CDPL16
+        if (cpu_level() == CPU_8086)
+            printf("NOTE  8086/8088: digital play may not keep up (watch underruns)\n");
+#endif
     }
     return 0;
 }

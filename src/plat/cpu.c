@@ -30,13 +30,19 @@ static unsigned short msw_get(void);
     "db 0Fh, 01h, 0E0h" \
     value [ax];
 
-int cpu_is_386(void)
+int cpu_level(void)
 {
-    unsigned short f = (unsigned short)(flags_get() & 0x0FFF);
+    static int level = -1;
+    unsigned short f;
 
+    if (level >= 0)
+        return level;
+    f = (unsigned short)(flags_get() & 0x0FFF);
     if ((flags_try(f) & 0xF000) == 0xF000)
-        return 0;                       /* 8086/8088/186 */
-    if (flags_try((unsigned short)(f | 0x7000)) & 0x7000)
-        return 1;                       /* 386+ */
-    return (msw_get() & 1) != 0;        /* 286 real mode, or 386+ in V86 */
+        level = CPU_8086;
+    else if (flags_try((unsigned short)(f | 0x7000)) & 0x7000)
+        level = CPU_386;
+    else                                /* 286 real mode, or 386+ in V86 */
+        level = (msw_get() & 1) ? CPU_386 : CPU_286;
+    return level;
 }

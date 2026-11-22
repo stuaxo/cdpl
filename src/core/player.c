@@ -1,6 +1,7 @@
 /* player.c - analog and digital CD audio back ends */
 #include <stdio.h>
 #include "player.h"
+#include "cpu.h"
 #include "mscdex.h"
 #include "sb.h"
 
@@ -165,6 +166,10 @@ static int dig_start(u32 from)
 {
     if (dig_setup())
         return -1;
+#ifdef CDPL16
+    if (cpu_level() == CPU_8086)
+        cd_log(0xF1, 0, 0, 0, "8086: digital play may not keep up");
+#endif
     next_sect = from;
     pl.blocks = pl.underruns = pl.read_errors = 0;
     fill_half(0);

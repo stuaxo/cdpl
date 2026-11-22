@@ -18,7 +18,7 @@ EXT = dos4g
 !endif
 
 INC = -i=$(%WATCOM)/h -i=src/plat -i=src/core -i=src/tui -i=src/app
-CF16 = -zq -ml -bt=dos -2 -s -ox -w4 -we -dCDPL16 $(INC)
+CF16 = -zq -ml -bt=dos -0 -s -ox -w4 -we -dCDPL16 $(INC)
 CF32 = -zq -mf -bt=dos -3r -s -ox -w4 -we -dCDPL32 $(INC)
 CFL  = -zq -ms -bt=dos -0 -s -os -w4 -we -i=$(%WATCOM)/h -i=src/plat
 
