@@ -1,7 +1,7 @@
 #!/bin/sh
 # package.sh VERSION - build the release zips from dist/ (run wmake dist first)
 #
-#   pkg/CDPLnnnn.ZIP   plain zip: the EXEs and README.MD
+#   pkg/CDPLnnnn.ZIP   plain zip: the EXEs, README.MD and LICENSE.TXT
 #   pkg/CDPL.ZIP       FreeDOS package: SOUND\CDPL, APPINFO\CDPL.LSM,
 #                      LINKS\CDPL.BAT, SOURCE\CDPL\SOURCES.ZIP
 #
@@ -14,7 +14,7 @@ ver=${ver#v}
 digits=$(printf %s "$ver" | tr -cd 0-9)
 [ -n "$digits" ] && [ ${#digits} -le 4 ] || {
     echo "package.sh: $ver: need 1-4 digits for an 8.3 zip name" >&2; exit 1; }
-for f in CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE README.MD; do
+for f in CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE README.MD LICENSE.TXT; do
     [ -f "dist/$f" ] || { echo "package.sh: dist/$f missing (wmake dist)" >&2; exit 1; }
 done
 
@@ -28,12 +28,12 @@ crlf() { sed 's/$/\r/'; }
 export TZ=UTC
 
 # plain zip
-(cd dist && zip -q -X -9 "$out/CDPL$digits.ZIP" CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE README.MD)
+(cd dist && zip -q -X -9 "$out/CDPL$digits.ZIP" CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE README.MD LICENSE.TXT)
 
 # FreeDOS package
 fd=$tmp/fd
 mkdir -p "$fd/APPINFO" "$fd/SOUND/CDPL" "$fd/LINKS" "$fd/SOURCE/CDPL"
-cp dist/CDPL.EXE dist/CDPL16.EXE dist/CDPL32.EXE dist/DOS4GW.EXE dist/README.MD "$fd/SOUND/CDPL/"
+cp dist/CDPL.EXE dist/CDPL16.EXE dist/CDPL32.EXE dist/DOS4GW.EXE dist/README.MD dist/LICENSE.TXT "$fd/SOUND/CDPL/"
 printf '@%%DOSDIR%%\\SOUND\\CDPL\\CDPL.EXE %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\n' | crlf > "$fd/LINKS/CDPL.BAT"
 crlf > "$fd/APPINFO/CDPL.LSM" <<LSM
 Begin3
@@ -49,7 +49,7 @@ Author:         Stuart Axon
 Maintained-by:  Stuart Axon
 Primary-site:   https://github.com/stuaxo/cdpl
 Platforms:      DOS, FreeDOS
-Copying-policy: ${CDPL_LICENSE:-see README.MD}
+Copying-policy: GNU General Public License, Version 3
 End
 LSM
 git archive --format=zip -9 -o "$fd/SOURCE/CDPL/SOURCES.ZIP" HEAD
