@@ -138,6 +138,7 @@ dist: all .SYMBOLIC
     @mkdir -p dist
     cp CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE dist/
     sed 's/$$/\r/' README.md > dist/README.MD
+    sed 's/$$/\r/' LICENSE > dist/LICENSE.TXT
 
 clean: .SYMBOLIC
     rm -rf obj16 obj32 dist CDPL.EXE CDPL16.EXE CDPL32.EXE DOS4GW.EXE *.err

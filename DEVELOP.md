@@ -22,8 +22,9 @@ wmake clean                        # removes obj16/, obj32/, dist/ and the EXEs
 | `DOS4GW.EXE` | copied from `$WATCOM/binw` |
 
 The build treats warnings as errors (`-w4 -we`). `wmake dist` collects the
-four EXEs in `dist/`, plus `README.MD`: that's `README.md` with DOS line
-endings, so write the README so it still reads as plain text.
+four EXEs in `dist/`, plus `README.MD` and `LICENSE.TXT`: `README.md` and
+`LICENSE` with DOS line endings, so write the README so it still reads as
+plain text.
 
 ## Source layout
 
@@ -82,7 +83,7 @@ both with 8.3 names:
 
 | Zip | Contents |
 |---|---|
-| `CDPLnnnn.ZIP` | the four EXEs and `README.MD`; `nnnn` is the version's digits, so 0.1.0 gives `CDPL010.ZIP` (at most 4 digits) |
+| `CDPLnnnn.ZIP` | the four EXEs, `README.MD` and `LICENSE.TXT`; `nnnn` is the version's digits, so 0.1.0 gives `CDPL010.ZIP` (at most 4 digits) |
 | `CDPL.ZIP` | FreeDOS package: `SOUND\CDPL\`, `APPINFO\CDPL.LSM`, `LINKS\CDPL.BAT`, `SOURCE\CDPL\SOURCES.ZIP` |
 
 GitHub Actions (`.github/workflows/build.yml`) builds and packages every
