@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0"
+
+      - name: Build
+        run: wmake -h dist </dev/null
+
+      - name: Package
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/v*) ver=${GITHUB_REF_NAME#v} ;;
+            *) ver=0.0.0 ;;
+          esac
+          sh tools/package.sh "$ver"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cdpl
+          path: pkg/*.ZIP
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" pkg/*.ZIP \
+            --title "CDPL $GITHUB_REF_NAME" --generate-notes
