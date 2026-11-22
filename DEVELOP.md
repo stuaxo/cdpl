@@ -74,3 +74,22 @@ C:\> cdpl /32 te
 - Set `$_wav_file` to capture what the emulated Sound Blaster plays.
 - If you run dosemu under `xvfb-run` for screenshots, unset
   `WAYLAND_DISPLAY`. Otherwise SDL opens the window on your real desktop.
+
+## Releases
+
+`tools/package.sh VERSION` (after `wmake dist`) writes two zips to `pkg/`,
+both with 8.3 names:
+
+| Zip | Contents |
+|---|---|
+| `CDPLnnnn.ZIP` | the four EXEs and `README.MD`; `nnnn` is the version's digits, so 0.1.0 gives `CDPL010.ZIP` (at most 4 digits) |
+| `CDPL.ZIP` | FreeDOS package: `SOUND\CDPL\`, `APPINFO\CDPL.LSM`, `LINKS\CDPL.BAT`, `SOURCE\CDPL\SOURCES.ZIP` |
+
+GitHub Actions (`.github/workflows/build.yml`) builds and packages every
+push to main and every pull request, and keeps the zips as a build
+artifact. Pushing a tag `vX.Y.Z` also creates a GitHub release with
+both zips attached:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
