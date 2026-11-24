@@ -1,7 +1,9 @@
 CDPL - CD audio test player for DOS and DOS emulators
 =====================================================
 
-**AI Disclosue/Warning:**  Built with LLMs directed by an (ancient) developer.
+**AI Disclosure/Warning:**  Built with LLMs directed by an (ancient) developer.
+
+The spelling mistakes are mine though :D
 
 
 TUI and text mode CD Player, built to exercise emulators and hardware.
@@ -53,13 +55,17 @@ BLASTER must be set (A, I, D and H for 16-bit).
 
 ### 16 / 32 bit toggle:
 
-When run from CDPL you can switch between 16 and 32 bit, this is
-useful for testing emulators.
+Switch between 16 bit real mode and 32 bit protected mode.
 
-Player state, mouse position etc are saved and then restored after
-the switch, so to the user it should be fairly smooth.
+This is more useful for testing than for users, but you never know.
 
-Interally this CDPL16 will quit and the launcher will start CDPL32.
+These options are available if you start from CDPL and are on 386
+or higher.
+
+Under the hood there are two copies of the player, switching
+between them should save + restore state, I can't promise the
+audio won't skip when you do this, but it seems to work pretty
+well.
 
 
 Commandline options:
@@ -69,24 +75,23 @@ Commandline options:
 
 If no commands are specified the TUI launches.
 
-Commands are words seperated by spaces, most of them have short forms.
+Commands are separated by spaces, most of them have a short version.
 
-Some examples:
+Examples:
 
     CDPL I              Show drive information.
     CDPL /M:D P 3 W     Set [/M]ode to [d]igital, [P]lay track [3] and [W]ait until it finishes.
     CDPL /16 /D:G TE    Self test the G: drive
 
-Chain commands together for longer tests:
-
-    CDPL P 3+01:30 W 5 PA ST R W 5 S L
-
-Using the longer names can be more readable:
+Chain commands for longer automations / tests:
 
     CDPL PLAY 3+01:30 WAIT 5 PAUSE STATUS RESUME WAIT 5 STOP LOG
 
-If a command is unknown CDPL exits with errorlevel 3.
+Short form:
 
+    CDPL P 3+01:30 W 5 PA ST R W 5 S L
+
+Unknown commands will exit with error level 3.
 
 ### Commands:
 
@@ -139,23 +144,42 @@ If a command is unknown CDPL exits with errorlevel 3.
       Internal: /S:file (state file, default CDPL.STA), /LAUNCHED (set by
       CDPL.EXE; enables the engine switch).
 
+
 ### Exit codes
 
-0 ok, 1 a command failed (including a position not on the disc),
-2 no MSCDEX, 3 bad command line (unknown word or switch, missing
-argument, not a CD drive).  16 and 32 are used between the engines and
-CDPL.EXE.
+    0 OK
+    1 Command failed e.g. a position outside this CD.
+    2 No MSCDEX
+    3 Bad command line (unknown word or switch, missing argument, not a CDROM drive).
+
 
 ### Keys
 
-P/Enter play, Space pause/resume, S stop, N/B next/previous track,
-Left/Right seek 5 s, 1-9 track, M analog/digital, E eject, C close,
-I drive info, R raw sector peek (C there toggles cooked/raw),
-L request log, F10 menu, Alt-X exit.  Right click = pause.
+    P/Enter:    Play
+    Space:      Pause / Resume
+    S:          Stop
+    N/B:        Next track / Previous track,
+    Left/Right: Seek 5 s
+    1-9:        Go to track 1-9
+    M:          Toggle Analog/Digital
+    E:          Eject
+    C:          Close,
+    I:          Drive Info
+    R:          Raw sector peek (C there toggles cooked/raw)
+    L:          Request Log
+    F10:        Menu
+    Alt-X:      Exit.
 
-The request log at the bottom shows each device request sent through
-INT 2Fh AX=1510h, with its status word (ERR / BUSY / DONE bits).  Polled
-Q-channel reads and good digital READ LONGs are only logged on error.
+### Mouse
+    Right click: pause.
+
+### Request log
+
+Shows device requests sent through INT 2F AX=1510h,
+status word bits (ERR / BUSY / DONE).
+
+Errors from Q-channel polled reads and digital READ longs are 
+also logged.
 
 
 Building
